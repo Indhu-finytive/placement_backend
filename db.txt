@@ -1,0 +1,363 @@
+Enum user_role {
+  ADMIN
+  COLLECTION_TEAM
+  PLACEMENT_PARTNER
+}
+
+Enum candidate_status {
+  REGISTERED
+  IN_TRAINING
+  INTERVIEW_READY
+  PLACED
+  CLOSED
+}
+
+Enum training_mode {
+  ONLINE
+  OFFLINE
+  HYBRID
+}
+
+Enum placement_status {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+Enum payment_type {
+  DOCUMENT_FEE
+  PLACEMENT_INSTALLMENT
+  OTHER
+}
+
+Enum payment_mode {
+  CASH
+  UPI
+  BANK_TRANSFER
+  CHEQUE
+  CARD
+  OTHER
+}
+
+Enum document_type {
+  OFFER_LETTER
+  PAYMENT_RECEIPT
+  OTHER
+}
+
+
+/* =========================================================
+   BRANCHES
+========================================================= */
+
+Table branches {
+  id uuid [pk]
+  name varchar(100) [not null]
+  code varchar(30) [not null, unique]
+  location varchar(150)
+  is_active boolean [not null, default: true]
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+
+/* =========================================================
+   TEAMS
+========================================================= */
+
+Table teams {
+  id uuid [pk]
+  branch_id uuid
+  name varchar(100) [not null]
+  is_active boolean [not null, default: true]
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+
+/* =========================================================
+   USERS
+========================================================= */
+
+Table users {
+  id uuid [pk]
+  team_id uuid
+
+  full_name varchar(150) [not null]
+  username varchar(80) [not null, unique]
+  mobile_number varchar(10)
+
+  password_hash text [not null]
+
+  role user_role [not null]
+
+  is_active boolean [not null, default: true]
+
+  last_login_at timestamptz
+
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+
+/* =========================================================
+   BATCHES
+========================================================= */
+
+Table batches {
+  id uuid [pk]
+
+  branch_id uuid
+  team_id uuid
+
+  name varchar(100) [not null]
+  course_name varchar(150)
+
+  training_mode training_mode [not null]
+
+  trainer_name varchar(150)
+
+  start_date date
+  end_date date
+
+  is_active boolean [not null, default: true]
+
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+
+/* =========================================================
+   CANDIDATES
+========================================================= */
+
+Table candidates {
+  id uuid [pk]
+
+  candidate_code varchar(30) [not null, unique]
+
+  batch_id uuid [not null]
+  assigned_team_id uuid
+  branch_id uuid
+
+  candidate_name varchar(150) [not null]
+
+  mobile_number varchar(10) [not null, unique]
+  alternate_mobile varchar(10)
+
+  joining_date date [not null]
+
+  gender varchar(20)
+  degree varchar(100)
+  department varchar(100)
+  passing_year smallint
+
+  college_name varchar(200)
+  current_location varchar(150)
+
+  status candidate_status [not null]
+
+  eligibility varchar(50)
+
+  remarks text
+
+  created_by uuid
+  updated_by uuid
+
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+
+/* =========================================================
+   PLACEMENTS
+========================================================= */
+
+Table placements {
+  id uuid [pk]
+
+  candidate_id uuid [not null]
+
+  company_name varchar(200) [not null]
+  job_role varchar(150)
+  company_location varchar(150)
+
+  placement_date date [not null]
+
+  joining_date date [not null]
+
+  due_period_days integer [not null]
+
+  auto_calculated_due_date date [not null]
+
+  final_applied_due_date date [not null]
+
+  annual_ctc numeric(14,2) [not null]
+
+  committed_percentage numeric(5,2) [not null]
+
+  committed_amount numeric(14,2) [note: 'Generated: Annual CTC × committed percentage / 100']
+
+  payment_terms text
+
+  referral_type varchar(100)
+
+  share_team_id uuid
+
+  status placement_status [not null]
+
+  remarks text
+
+  created_by uuid
+  updated_by uuid
+
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+
+/* =========================================================
+   DUE DATE OVERRIDES
+========================================================= */
+
+Table placement_due_date_overrides {
+  id uuid [pk]
+
+  placement_id uuid [not null]
+
+  auto_calculated_due_date date [not null]
+
+  previous_applied_due_date date [not null]
+
+  new_applied_due_date date [not null]
+
+  override_reason text [not null]
+
+  changed_by uuid
+
+  changed_at timestamptz
+}
+
+
+/* =========================================================
+   DOCUMENTS
+========================================================= */
+
+Table documents {
+  id uuid [pk]
+
+  candidate_id uuid
+  placement_id uuid
+
+  document_type document_type [not null]
+
+  file_name varchar(255) [not null]
+
+  storage_key text [not null]
+
+  mime_type varchar(100)
+
+  file_size bigint
+
+  uploaded_by uuid
+
+  uploaded_at timestamptz
+}
+
+
+/* =========================================================
+   PAYMENTS
+========================================================= */
+
+Table payments {
+  id uuid [pk]
+
+  candidate_id uuid [not null]
+
+  placement_id uuid
+
+  payment_type payment_type [not null]
+
+  amount numeric(14,2) [not null]
+
+  payment_date date [not null]
+
+  payment_mode payment_mode [not null]
+
+  account_name varchar(150)
+
+  account_holder_id uuid
+
+  reference_number varchar(150)
+
+  remarks text
+
+  received_by uuid
+
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+
+/* =========================================================
+   AUDIT LOGS
+========================================================= */
+
+Table audit_logs {
+  id bigint [pk, increment]
+
+  user_id uuid
+
+  entity_type varchar(80) [not null]
+
+  entity_id uuid
+
+  action varchar(80) [not null]
+
+  old_values jsonb
+
+  new_values jsonb
+
+  ip_address inet
+
+  created_at timestamptz
+}
+
+
+/* =========================================================
+   RELATIONSHIPS
+========================================================= */
+
+Ref: teams.branch_id > branches.id
+
+Ref: users.team_id > teams.id
+
+Ref: batches.branch_id > branches.id
+Ref: batches.team_id > teams.id
+
+Ref: candidates.batch_id > batches.id
+Ref: candidates.assigned_team_id > teams.id
+Ref: candidates.branch_id > branches.id
+
+Ref: candidates.created_by > users.id
+Ref: candidates.updated_by > users.id
+
+Ref: placements.candidate_id > candidates.id
+Ref: placements.share_team_id > teams.id
+
+Ref: placements.created_by > users.id
+Ref: placements.updated_by > users.id
+
+Ref: placement_due_date_overrides.placement_id > placements.id
+Ref: placement_due_date_overrides.changed_by > users.id
+
+Ref: documents.candidate_id > candidates.id
+Ref: documents.placement_id > placements.id
+Ref: documents.uploaded_by > users.id
+
+Ref: payments.candidate_id > candidates.id
+Ref: payments.placement_id > placements.id
+Ref: payments.account_holder_id > users.id
+Ref: payments.received_by > users.id
+
+Ref: audit_logs.user_id > users.id
