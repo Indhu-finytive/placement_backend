@@ -42,6 +42,7 @@ com\uniq\placement\security\UserDetailsServiceImpl.class
 com\uniq\placement\dto\payment\CandidatePaymentsDto.class
 com\uniq\placement\entity\Document.class
 com\uniq\placement\entity\Branch$BranchBuilder.class
+com\uniq\placement\entity\enums\AccessLevelConverter.class
 com\uniq\placement\dto\settlement\SettlementResponseDto.class
 com\uniq\placement\entity\RolePermission$RolePermissionBuilder.class
 com\uniq\placement\repository\AccountHolderRepository.class
@@ -55,6 +56,7 @@ com\uniq\placement\controller\CandidateController.class
 com\uniq\placement\dto\auth\AuthResponseDto.class
 com\uniq\placement\service\ReportService.class
 com\uniq\placement\service\UserService.class
+com\uniq\placement\entity\enums\UserRoleConverter.class
 com\uniq\placement\entity\User$UserBuilder.class
 com\uniq\placement\service\CandidateService.class
 com\uniq\placement\util\CandidateCodeGenerator.class
@@ -112,6 +114,7 @@ com\uniq\placement\dto\audit\AuditEventDto.class
 com\uniq\placement\dto\user\UserCreateDto.class
 com\uniq\placement\repository\UserRepository.class
 com\uniq\placement\dto\report\MonthlyTrendDto.class
+com\uniq\placement\config\ApiPathConfig.class
 com\uniq\placement\entity\enums\ActiveStatus.class
 com\uniq\placement\dto\placement\PlacementInputDto.class
 com\uniq\placement\security\SecurityConfig.class
@@ -135,6 +138,7 @@ com\uniq\placement\dto\team\TeamResponseDto.class
 com\uniq\placement\dto\candidate\CandidateCreateDto.class
 com\uniq\placement\dto\settlement\SettlementCreateDto.class
 com\uniq\placement\service\TeamHistoryService.class
+com\uniq\placement\config\SpaForwardFilter.class
 com\uniq\placement\controller\ReportController.class
 com\uniq\placement\dto\permission\RolePermissionDto.class
 com\uniq\placement\util\PaymentIdGenerator.class

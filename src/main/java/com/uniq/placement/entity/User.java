@@ -1,7 +1,9 @@
 package com.uniq.placement.entity;
 
 import com.uniq.placement.entity.enums.AccessLevel;
+import com.uniq.placement.entity.enums.AccessLevelConverter;
 import com.uniq.placement.entity.enums.UserRole;
+import com.uniq.placement.entity.enums.UserRoleConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -38,11 +40,11 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = UserRoleConverter.class)
     @Column(nullable = false)
     private UserRole role;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = AccessLevelConverter.class)
     @Column(nullable = false)
     private AccessLevel access;
 

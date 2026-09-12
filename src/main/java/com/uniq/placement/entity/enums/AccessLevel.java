@@ -1,5 +1,6 @@
 package com.uniq.placement.entity.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum AccessLevel {
@@ -16,9 +17,11 @@ public enum AccessLevel {
     @JsonValue
     public String getValue() { return value; }
 
+    @JsonCreator
     public static AccessLevel fromValue(String value) {
         for (AccessLevel a : values()) {
             if (a.value.equalsIgnoreCase(value)) return a;
+            if (a.name().equalsIgnoreCase(value)) return a;
         }
         throw new IllegalArgumentException("Unknown AccessLevel: " + value);
     }

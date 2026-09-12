@@ -7,6 +7,7 @@ import com.uniq.placement.dto.user.UserStatusUpdateDto;
 import com.uniq.placement.dto.user.UserUpdateDto;
 import com.uniq.placement.entity.Team;
 import com.uniq.placement.entity.User;
+import com.uniq.placement.entity.enums.AccessLevel;
 import com.uniq.placement.entity.enums.ActiveStatus;
 import com.uniq.placement.entity.enums.UserRole;
 import com.uniq.placement.exception.BusinessRuleException;
@@ -63,13 +64,13 @@ public class UserService {
         user.setEmail(dto.getEmail());
         user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         user.setRole(dto.getRole());
-        user.setAccess(dto.getAccess());
+        user.setAccess(accessForRole(dto.getRole()));
         user.setIsActive(dto.getStatus() == ActiveStatus.ACTIVE);
-        user.setPermissions(dto.getPermissions());
+        user.setPermissions(rolePermissionService.getPermissionMapForRole(dto.getRole()));
 
         List<Team> teams = teamRepository.findAllById(dto.getTeams());
-        if (teams.isEmpty()) {
-            throw new ResourceNotFoundException("No valid teams found");
+        if (teams.size() != dto.getTeams().size()) {
+            throw new ResourceNotFoundException("One or more teams were not found");
         }
         user.setTeams(new HashSet<>(teams));
 
@@ -111,16 +112,19 @@ public class UserService {
             user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         }
         
-        if (dto.getRole() != null) user.setRole(dto.getRole());
-        if (dto.getAccess() != null) user.setAccess(dto.getAccess());
+        if (dto.getRole() != null) {
+            user.setRole(dto.getRole());
+            user.setAccess(accessForRole(dto.getRole()));
+            user.setPermissions(rolePermissionService.getPermissionMapForRole(dto.getRole()));
+        }
         if (dto.getStatus() != null) user.setIsActive(dto.getStatus() == ActiveStatus.ACTIVE);
-        if (dto.getPermissions() != null) user.setPermissions(dto.getPermissions());
 
         if (dto.getTeams() != null && !dto.getTeams().isEmpty()) {
             List<Team> teams = teamRepository.findAllById(dto.getTeams());
-            if (!teams.isEmpty()) {
-                user.setTeams(new HashSet<>(teams));
+            if (teams.size() != dto.getTeams().size()) {
+                throw new ResourceNotFoundException("One or more teams were not found");
             }
+            user.setTeams(new HashSet<>(teams));
         }
 
         User savedUser = userRepository.save(user);
@@ -157,12 +161,18 @@ public class UserService {
         dto.setUsername(user.getUsername());
         dto.setRole(user.getRole());
         dto.setTeams(user.getTeams().stream().map(t -> t.getId().toString()).collect(Collectors.toList()));
-        dto.setAccess(user.getAccess());
         dto.setStatus(user.getIsActive() ? ActiveStatus.ACTIVE : ActiveStatus.INACTIVE);
         // Load permissions from role_permissions table
         dto.setPermissions(rolePermissionService.getPermissionMapForRole(user.getRole()));
         dto.setInitials(user.getInitials());
         dto.setLastLoginAt(user.getLastLoginAt());
         return dto;
+    }
+
+    private AccessLevel accessForRole(UserRole role) {
+        if (role == UserRole.ADMIN) return AccessLevel.FULL_ACCESS;
+        if (role == UserRole.SHARE_PARTNER) return AccessLevel.SHARE_VIEW_ONLY;
+        if (role == UserRole.CUSTOM_USER) return AccessLevel.VIEW_ONLY;
+        return AccessLevel.COLLECTION_ENTRY;
     }
 }

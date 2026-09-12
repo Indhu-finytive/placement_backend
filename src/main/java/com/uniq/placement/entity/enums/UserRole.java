@@ -1,5 +1,6 @@
 package com.uniq.placement.entity.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum UserRole {
@@ -15,9 +16,11 @@ public enum UserRole {
     @JsonValue
     public String getValue() { return value; }
 
+    @JsonCreator
     public static UserRole fromValue(String value) {
         for (UserRole r : values()) {
             if (r.value.equalsIgnoreCase(value)) return r;
+            if (r.name().equalsIgnoreCase(value)) return r;
         }
         throw new IllegalArgumentException("Unknown UserRole: " + value);
     }

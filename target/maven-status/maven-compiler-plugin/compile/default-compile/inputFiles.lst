@@ -1,5 +1,7 @@
+C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\config\ApiPathConfig.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\config\CorsConfig.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\config\DataSeeder.java
+C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\config\SpaForwardFilter.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\controller\AccountHolderController.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\controller\AuditController.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\controller\AuthController.java
@@ -61,6 +63,7 @@ C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\pl
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\Candidate.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\Document.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\enums\AccessLevel.java
+C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\enums\AccessLevelConverter.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\enums\ActiveStatus.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\enums\BranchLocation.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\enums\CandidateStatus.java
@@ -76,6 +79,7 @@ C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\pl
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\enums\SettlementDirection.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\enums\TrainingMode.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\enums\UserRole.java
+C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\enums\UserRoleConverter.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\Payment.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\Placement.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\PlacementDueDateOverride.java

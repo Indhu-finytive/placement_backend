@@ -20,10 +20,17 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByUsername(String username);
 
-    @Query("SELECT u FROM User u LEFT JOIN u.teams t WHERE " +
-           "(:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(u.mobileNumber) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+    @Query(value = "SELECT DISTINCT u FROM User u LEFT JOIN u.teams t WHERE " +
+           "(:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+           "OR LOWER(u.username) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+           "OR LOWER(u.mobileNumber) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))) " +
+           "AND (:role IS NULL OR u.role = :role) " +
+           "AND (:teamId IS NULL OR t.id = :teamId) " +
+           "AND (:isActive IS NULL OR u.isActive = :isActive)",
+           countQuery = "SELECT COUNT(DISTINCT u) FROM User u LEFT JOIN u.teams t WHERE " +
+           "(:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+           "OR LOWER(u.username) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+           "OR LOWER(u.mobileNumber) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))) " +
            "AND (:role IS NULL OR u.role = :role) " +
            "AND (:teamId IS NULL OR t.id = :teamId) " +
            "AND (:isActive IS NULL OR u.isActive = :isActive)")

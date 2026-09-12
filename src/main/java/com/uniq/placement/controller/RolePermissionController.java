@@ -33,8 +33,9 @@ public class RolePermissionController {
      * Get permissions for a specific role.
      */
     @GetMapping("/role/{role}")
-    public ResponseEntity<List<RolePermissionDto>> getPermissionsForRole(@PathVariable UserRole role) {
-        return ResponseEntity.ok(rolePermissionService.getPermissionsForRole(role));
+    public ResponseEntity<List<RolePermissionDto>> getPermissionsForRole(@PathVariable String role) {
+        UserRole userRole = UserRole.fromValue(role);
+        return ResponseEntity.ok(rolePermissionService.getPermissionsForRole(userRole));
     }
 
     /**
@@ -61,8 +62,9 @@ public class RolePermissionController {
      */
     @PutMapping("/role/{role}")
     public ResponseEntity<List<RolePermissionDto>> savePermissionsForRole(
-            @PathVariable UserRole role,
+            @PathVariable String role,
             @Valid @RequestBody List<RolePermissionUpdateDto> permissions) {
-        return ResponseEntity.ok(rolePermissionService.savePermissionsForRole(role, permissions));
+        UserRole userRole = UserRole.fromValue(role);
+        return ResponseEntity.ok(rolePermissionService.savePermissionsForRole(userRole, permissions));
     }
 }

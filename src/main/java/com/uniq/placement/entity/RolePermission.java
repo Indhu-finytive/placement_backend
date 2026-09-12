@@ -1,6 +1,7 @@
 package com.uniq.placement.entity;
 
 import com.uniq.placement.entity.enums.UserRole;
+import com.uniq.placement.entity.enums.UserRoleConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -27,7 +28,7 @@ public class RolePermission {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = UserRoleConverter.class)
     @Column(nullable = false, length = 50)
     private UserRole role;
 

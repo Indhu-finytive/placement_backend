@@ -1,7 +1,5 @@
 server:
   port: 9898
-  servlet:
-    context-path: /api/v1
 
 spring:
   datasource:

@@ -49,9 +49,11 @@ public class WebSecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> 
                 auth.requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers("/auth/login").permitAll()
+                    .requestMatchers("/", "/index.html", "/assets/**", "/favicon.ico").permitAll()
+                    .requestMatchers("/api/v1/auth/login").permitAll()
                     .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                    .anyRequest().authenticated()
+                    .requestMatchers("/api/**").authenticated()
+                    .anyRequest().permitAll()
             );
 
         http.authenticationProvider(authenticationProvider());

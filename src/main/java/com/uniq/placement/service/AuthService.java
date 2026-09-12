@@ -53,7 +53,6 @@ public class AuthService {
             userDto.setUsername(user.getUsername());
             userDto.setRole(user.getRole());
             userDto.setTeams(user.getTeams().stream().map(t -> t.getId().toString()).collect(Collectors.toList()));
-            userDto.setAccess(user.getAccess());
             userDto.setPermissions(permissions);
             userDto.setInitials(user.getInitials());
 
