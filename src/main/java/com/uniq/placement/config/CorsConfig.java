@@ -15,7 +15,10 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.addAllowedOrigin("http://localhost:5173");
+        config.addAllowedOrigin("http://50.117.0.164:5173");
+        config.addAllowedOrigin("http://50.117.0.164:9898");
         config.addAllowedOrigin("http://127.0.0.1:5173");
+
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         config.setMaxAge(3600L);
