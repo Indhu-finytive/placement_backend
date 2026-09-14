@@ -30,7 +30,9 @@ public class CandidateResponseDto {
     private String collegeName;
     private String currentLocation;
     private String course;
+    private String batch;
     private TrainingMode batchType;
+    private String branch;
     private String branchName;
     private String trainer;
     private UUID assignedTeamId;

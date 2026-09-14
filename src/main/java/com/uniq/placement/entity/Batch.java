@@ -1,6 +1,7 @@
 package com.uniq.placement.entity;
 
 import com.uniq.placement.entity.enums.TrainingMode;
+import com.uniq.placement.entity.enums.TrainingModeConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -35,7 +36,7 @@ public class Batch {
     @Column(name = "course_name", length = 150)
     private String courseName;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = TrainingModeConverter.class)
     @Column(name = "training_mode", nullable = false)
     private TrainingMode trainingMode;
 

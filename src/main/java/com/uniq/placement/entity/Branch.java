@@ -1,6 +1,7 @@
 package com.uniq.placement.entity;
 
 import com.uniq.placement.entity.enums.BranchLocation;
+import com.uniq.placement.entity.enums.BranchLocationConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -26,7 +27,7 @@ public class Branch {
     @Column(nullable = false, unique = true, length = 30)
     private String code;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = BranchLocationConverter.class)
     @Column(nullable = false, length = 50)
     private BranchLocation location;
 

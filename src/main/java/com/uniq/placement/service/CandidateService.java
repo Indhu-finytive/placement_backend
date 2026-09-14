@@ -1,6 +1,7 @@
 package com.uniq.placement.service;
 
 import com.uniq.placement.dto.candidate.*;
+import com.uniq.placement.dto.common.EnumOptionDto;
 import com.uniq.placement.dto.common.PageDto;
 import com.uniq.placement.dto.payment.PaymentCreateDto;
 import com.uniq.placement.dto.payment.PaymentResponseDto;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -32,14 +34,18 @@ public class CandidateService {
 
     private final CandidateRepository candidateRepository;
     private final BatchRepository batchRepository;
+    private final BranchRepository branchRepository;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
     private final CandidateCodeGenerator codeGenerator;
     private final PaymentService paymentService;
+    private final CandidateHistoryService candidateHistoryService;
 
     @Transactional(readOnly = true)
     public PageDto<CandidateResponseDto> getCandidates(String search, String team, CandidateStatus status, Eligibility eligibility, String course, int page, int pageSize) {
-        Pageable pageable = PageRequest.of(page - 1, pageSize);
+        int safePage = Math.max(page, 1);
+        int safePageSize = Math.max(pageSize, 1);
+        Pageable pageable = PageRequest.of(safePage - 1, safePageSize);
         
         User currentUser = getCurrentUser();
         Collection<UUID> teamIds = currentUser.getRole() == UserRole.ADMIN ? null : 
@@ -47,14 +53,19 @@ public class CandidateService {
             
         UUID teamIdFilter = team != null && !team.isBlank() ? UUID.fromString(team) : null;
 
-        Page<Candidate> candidatePage = candidateRepository.findAllWithFilters(
-                search, teamIdFilter, status, eligibility, course, teamIds, pageable);
+        if (currentUser.getRole() != UserRole.ADMIN && teamIds.isEmpty()) {
+            return new PageDto<>(List.of(), safePage, safePageSize, 0);
+        }
+
+        Page<Candidate> candidatePage = currentUser.getRole() == UserRole.ADMIN
+                ? candidateRepository.findAllWithFilters(search, teamIdFilter, status, eligibility, course, pageable)
+                : candidateRepository.findAllWithFilters(search, teamIdFilter, status, eligibility, course, teamIds, pageable);
 
         List<CandidateResponseDto> dtos = candidatePage.getContent().stream()
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
 
-        return new PageDto<>(dtos, page, pageSize, candidatePage.getTotalElements());
+        return new PageDto<>(dtos, safePage, safePageSize, candidatePage.getTotalElements());
     }
 
     @Transactional
@@ -63,17 +74,16 @@ public class CandidateService {
             throw new DuplicateResourceException("Candidate with mobile " + dto.getMobileNumber() + " already exists");
         }
 
-        Batch batch = batchRepository.findById(dto.getBatchId())
-                .orElseThrow(() -> new ResourceNotFoundException("Batch not found"));
-                
         Team assignedTeam = teamRepository.findById(dto.getAssignedTeamId())
                 .orElseThrow(() -> new ResourceNotFoundException("Team not found"));
+        Branch branch = resolveBranch(dto.getBranch(), assignedTeam);
+        Batch batch = resolveBatch(dto.getBatch(), dto.getBatchId(), branch, assignedTeam, dto.getCourse(), dto.getBatchType(), dto.getTrainer());
 
         Candidate candidate = new Candidate();
         candidate.setCandidateCode(codeGenerator.generateCode(dto.getCourse()));
         candidate.setBatch(batch);
         candidate.setAssignedTeam(assignedTeam);
-        candidate.setBranch(batch.getBranch());
+        candidate.setBranch(branch != null ? branch : batch.getBranch());
         
         candidate.setCandidateName(dto.getCandidateName());
         candidate.setMobileNumber(dto.getMobileNumber());
@@ -100,6 +110,14 @@ public class CandidateService {
         candidate.setUpdatedBy(currentUser);
 
         Candidate savedCandidate = candidateRepository.save(candidate);
+
+        // Log history for candidate registration
+        candidateHistoryService.log(
+                savedCandidate.getId(),
+                currentUser.getUsername(),
+                "CREATE",
+                "Candidate registered"
+        );
         
         // Handle initial document fee if provided
         if (dto.getInitialDocumentFee() != null) {
@@ -135,6 +153,11 @@ public class CandidateService {
         Candidate candidate = candidateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Candidate not found"));
 
+        // Capture old values for change detection
+        CandidateStatus oldStatus = candidate.getStatus();
+        String oldCourse = candidate.getCourse();
+        Eligibility oldEligibility = candidate.getEligibility();
+
         if (dto.getCandidateName() != null) candidate.setCandidateName(dto.getCandidateName());
         if (dto.getMobileNumber() != null && !dto.getMobileNumber().equals(candidate.getMobileNumber())) {
             if (candidateRepository.existsByMobileNumber(dto.getMobileNumber())) {
@@ -165,17 +188,76 @@ public class CandidateService {
             candidate.setAssignedTeam(assignedTeam);
         }
 
-        if (dto.getBatchId() != null) {
-            Batch batch = batchRepository.findById(dto.getBatchId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Batch not found"));
-            candidate.setBatch(batch);
-            candidate.setBranch(batch.getBranch());
+        if (dto.getBranch() != null) {
+            candidate.setBranch(resolveBranch(dto.getBranch(), candidate.getAssignedTeam()));
         }
 
-        candidate.setUpdatedBy(getCurrentUser());
+        if (dto.getBatchId() != null || (dto.getBatch() != null && !dto.getBatch().isBlank())) {
+            Batch batch = resolveBatch(
+                    dto.getBatch(),
+                    dto.getBatchId(),
+                    candidate.getBranch(),
+                    candidate.getAssignedTeam(),
+                    candidate.getCourse(),
+                    candidate.getBatchType(),
+                    candidate.getTrainer());
+            candidate.setBatch(batch);
+            if (candidate.getBranch() == null) candidate.setBranch(batch.getBranch());
+        }
+
+        User currentUser = getCurrentUser();
+        candidate.setUpdatedBy(currentUser);
         
         Candidate savedCandidate = candidateRepository.save(candidate);
+
+        // Log history for changes
+        logCandidateChanges(savedCandidate.getId(), currentUser.getUsername(),
+                oldStatus, candidate.getStatus(),
+                oldCourse, candidate.getCourse(),
+                oldEligibility, candidate.getEligibility());
+
         return mapToResponseDto(savedCandidate);
+    }
+
+    public RegistrationOptionsDto getRegistrationOptions() {
+        List<EnumOptionDto> candidateStatuses = Arrays.stream(CandidateStatus.values())
+                .map(s -> new EnumOptionDto(s.name(), s.getValue()))
+                .collect(Collectors.toList());
+
+        List<EnumOptionDto> eligibilities = Arrays.stream(Eligibility.values())
+                .map(e -> new EnumOptionDto(e.name(), e.getValue()))
+                .collect(Collectors.toList());
+
+        List<EnumOptionDto> courses = Arrays.stream(Course.values())
+                .map(c -> new EnumOptionDto(c.name(), c.getValue()))
+                .collect(Collectors.toList());
+
+        return new RegistrationOptionsDto(candidateStatuses, eligibilities, courses);
+    }
+
+    private void logCandidateChanges(UUID candidateId, String username,
+                                      CandidateStatus oldStatus, CandidateStatus newStatus,
+                                      String oldCourse, String newCourse,
+                                      Eligibility oldEligibility, Eligibility newEligibility) {
+        if (oldStatus != newStatus && newStatus != null) {
+            String oldLabel = oldStatus != null ? oldStatus.getValue() : "None";
+            candidateHistoryService.log(candidateId, username, "STATUS_CHANGE",
+                    "Candidate status changed from " + oldLabel + " to " + newStatus.getValue());
+        }
+
+        if (oldCourse != null && newCourse != null && !oldCourse.equals(newCourse)) {
+            candidateHistoryService.log(candidateId, username, "COURSE_CHANGE",
+                    "Candidate course changed from " + oldCourse + " to " + newCourse);
+        } else if (oldCourse == null && newCourse != null) {
+            candidateHistoryService.log(candidateId, username, "COURSE_CHANGE",
+                    "Candidate course changed from None to " + newCourse);
+        }
+
+        if (oldEligibility != newEligibility && newEligibility != null) {
+            String oldLabel = oldEligibility != null ? oldEligibility.getValue() : "None";
+            candidateHistoryService.log(candidateId, username, "ELIGIBILITY_CHANGE",
+                    "Candidate eligibility changed from " + oldLabel + " to " + newEligibility.getValue());
+        }
     }
 
     private User getCurrentUser() {
@@ -201,8 +283,12 @@ public class CandidateService {
         dto.setCollegeName(candidate.getCollegeName());
         dto.setCurrentLocation(candidate.getCurrentLocation());
         dto.setCourse(candidate.getCourse());
+        if (candidate.getBatch() != null) dto.setBatch(candidate.getBatch().getName());
         dto.setBatchType(candidate.getBatchType());
-        if (candidate.getBranch() != null) dto.setBranchName(candidate.getBranch().getName());
+        if (candidate.getBranch() != null) {
+            dto.setBranch(candidate.getBranch().getName());
+            dto.setBranchName(candidate.getBranch().getName());
+        }
         dto.setTrainer(candidate.getTrainer());
         if (candidate.getAssignedTeam() != null) dto.setAssignedTeamId(candidate.getAssignedTeam().getId());
         dto.setStatus(candidate.getStatus());
@@ -259,5 +345,36 @@ public class CandidateService {
         }
 
         return dto;
+    }
+
+    private Branch resolveBranch(String branchName, Team assignedTeam) {
+        if (branchName != null && !branchName.isBlank()) {
+            return branchRepository.findFirstByNameIgnoreCase(branchName.trim())
+                    .orElseThrow(() -> new ResourceNotFoundException("Branch not found: " + branchName));
+        }
+        return assignedTeam != null ? assignedTeam.getBranch() : null;
+    }
+
+    private Batch resolveBatch(String batchName, UUID batchId, Branch branch, Team team, String course, TrainingMode batchType, String trainer) {
+        if (batchId != null) {
+            return batchRepository.findById(batchId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Batch not found"));
+        }
+        String normalizedBatchName = batchName == null ? "" : batchName.trim();
+        if (normalizedBatchName.isEmpty()) {
+            throw new BusinessRuleException("Batch is required");
+        }
+        return batchRepository.findFirstByNameIgnoreCase(normalizedBatchName)
+                .orElseGet(() -> {
+                    Batch batch = new Batch();
+                    batch.setName(normalizedBatchName);
+                    batch.setBranch(branch);
+                    batch.setTeam(team);
+                    batch.setCourseName(course);
+                    batch.setTrainingMode(batchType != null ? batchType : TrainingMode.OFFLINE);
+                    batch.setTrainerName(trainer);
+                    batch.setIsActive(true);
+                    return batchRepository.save(batch);
+                });
     }
 }

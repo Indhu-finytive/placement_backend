@@ -1,7 +1,6 @@
 package com.uniq.placement.entity;
 
-import com.uniq.placement.entity.enums.PaymentMode;
-import com.uniq.placement.entity.enums.PaymentType;
+import com.uniq.placement.entity.enums.*;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -34,7 +33,7 @@ public class Payment {
     @JoinColumn(name = "placement_id")
     private Placement placement;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = PaymentTypeConverter.class)
     @Column(name = "payment_type", nullable = false)
     private PaymentType paymentType;
 
@@ -44,7 +43,7 @@ public class Payment {
     @Column(name = "payment_date", nullable = false)
     private LocalDate paymentDate;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = PaymentModeConverter.class)
     @Column(name = "payment_mode", nullable = false)
     private PaymentMode paymentMode;
 

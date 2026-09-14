@@ -1,6 +1,7 @@
 package com.uniq.placement.entity;
 
 import com.uniq.placement.entity.enums.SettlementDirection;
+import com.uniq.placement.entity.enums.SettlementDirectionConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -33,7 +34,7 @@ public class Settlement {
     @Column(length = 150)
     private String account;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = SettlementDirectionConverter.class)
     @Column(nullable = false)
     private SettlementDirection direction;
 

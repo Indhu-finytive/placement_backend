@@ -18,10 +18,8 @@ public class PlacementInputDto {
     @NotBlank(message = "Company name is required")
     private String companyName;
 
-    @NotBlank(message = "Job role is required")
     private String jobRole;
 
-    @NotBlank(message = "Location is required")
     private String companyLocation;
 
     @NotNull(message = "Placement date is required")

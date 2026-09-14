@@ -14,7 +14,7 @@ public class CandidateCodeGenerator {
         this.candidateRepository = candidateRepository;
     }
 
-    public String generateCode(String course) {
+    public synchronized String generateCode(String course) {
         String prefix = getCoursePrefix(course);
         int maxSequence = candidateRepository.findMaxSequenceByPrefix(prefix);
         return String.format("%s-%05d", prefix, maxSequence + 1);

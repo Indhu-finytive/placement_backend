@@ -38,13 +38,16 @@ public class CandidateCreateDto {
     @NotBlank(message = "Course is required")
     private String course;
 
+    @NotBlank(message = "Batch is required")
+    private String batch;
+
+    private String branch;
     private TrainingMode batchType;
     private String trainer;
 
     @NotNull(message = "Assigned team is required")
     private UUID assignedTeamId;
 
-    @NotNull(message = "Batch is required")
     private UUID batchId;
 
     private CandidateStatus status;

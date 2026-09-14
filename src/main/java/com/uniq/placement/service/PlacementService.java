@@ -9,6 +9,7 @@ import com.uniq.placement.entity.User;
 import com.uniq.placement.entity.enums.CandidateStatus;
 import com.uniq.placement.entity.enums.DuePeriod;
 import com.uniq.placement.entity.enums.PlacementStatusEnum;
+import com.uniq.placement.service.CandidateHistoryService;
 import com.uniq.placement.exception.ResourceNotFoundException;
 import com.uniq.placement.repository.CandidateRepository;
 import com.uniq.placement.repository.PlacementRepository;
@@ -33,6 +34,7 @@ public class PlacementService {
     private final CandidateRepository candidateRepository;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
+    private final CandidateHistoryService candidateHistoryService;
 
     @Transactional
     public PlacementResponseDto savePlacement(UUID candidateId, PlacementInputDto dto) {
@@ -41,6 +43,9 @@ public class PlacementService {
 
         Placement placement = placementRepository.findByCandidateId(candidateId)
                 .orElse(new Placement());
+        boolean newPlacement = placement.getId() == null;
+        BigDecimal oldAnnualCtc = placement.getAnnualCtc();
+        BigDecimal oldCommittedPercentage = placement.getCommittedPercentage();
 
         placement.setCandidate(candidate);
         placement.setCompanyName(dto.getCompanyName());
@@ -83,6 +88,26 @@ public class PlacementService {
         placement.setUpdatedBy(getCurrentUser());
 
         Placement savedPlacement = placementRepository.save(placement);
+
+        String username = getCurrentUser().getUsername();
+        if (newPlacement) {
+            candidateHistoryService.log(candidateId, username, "PLACEMENT_CREATE",
+                    "Placement created at " + savedPlacement.getCompanyName());
+        } else {
+            if (oldAnnualCtc != null && oldAnnualCtc.compareTo(savedPlacement.getAnnualCtc()) != 0) {
+                candidateHistoryService.log(candidateId, username, "PLACEMENT_CTC_CHANGE",
+                        "Placement CTC changed from " + oldAnnualCtc + " to " + savedPlacement.getAnnualCtc());
+            }
+            if (oldCommittedPercentage != null && oldCommittedPercentage.compareTo(savedPlacement.getCommittedPercentage()) != 0) {
+                candidateHistoryService.log(candidateId, username, "PLACEMENT_COMMITMENT_CHANGE",
+                        "Placement commitment changed from " + oldCommittedPercentage + "% to " + savedPlacement.getCommittedPercentage() + "%");
+            }
+            if ((oldAnnualCtc == null || oldAnnualCtc.compareTo(savedPlacement.getAnnualCtc()) == 0)
+                    && (oldCommittedPercentage == null || oldCommittedPercentage.compareTo(savedPlacement.getCommittedPercentage()) == 0)) {
+                candidateHistoryService.log(candidateId, username, "PLACEMENT_UPDATE",
+                        "Placement details updated for " + savedPlacement.getCompanyName());
+            }
+        }
         
         // Update candidate status
         if (candidate.getStatus() == CandidateStatus.REGISTERED || 

@@ -4,6 +4,7 @@ import com.uniq.placement.dto.common.ProblemDto;
 import com.uniq.placement.dto.common.ValidationProblemDto;
 import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.HibernateException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -99,25 +101,48 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(problem, HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ProblemDto> handleIllegalArgumentException(IllegalArgumentException ex, HttpServletRequest request) {
+        ProblemDto problem = ProblemDto.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .title("Bad Request")
+                .detail(ex.getMessage())
+                .traceId(UUID.randomUUID().toString())
+                .build();
+        return new ResponseEntity<>(problem, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler({DataAccessException.class, JpaSystemException.class, HibernateException.class, PersistenceException.class})
     public ResponseEntity<ProblemDto> handlePersistenceAndDataAccessException(Exception ex, HttpServletRequest request) {
+        String traceId = UUID.randomUUID().toString();
+        log.error("Database error. traceId={}", traceId, ex);
         ProblemDto problem = ProblemDto.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .title("Database Error")
-                .detail("The request could not be processed because the database query failed. Please contact support with the trace ID.")
-                .traceId(UUID.randomUUID().toString())
+                .detail("Database query failed: " + rootMessage(ex))
+                .traceId(traceId)
                 .build();
         return new ResponseEntity<>(problem, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDto> handleGlobalException(Exception ex, HttpServletRequest request) {
+        String traceId = UUID.randomUUID().toString();
+        log.error("Unexpected error. traceId={}", traceId, ex);
         ProblemDto problem = ProblemDto.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .title("Internal Server Error")
-                .detail("An unexpected error occurred. Please contact support with the trace ID.")
-                .traceId(UUID.randomUUID().toString())
+                .detail("Unexpected error: " + rootMessage(ex))
+                .traceId(traceId)
                 .build();
         return new ResponseEntity<>(problem, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private String rootMessage(Throwable throwable) {
+        Throwable root = throwable;
+        while (root.getCause() != null) {
+            root = root.getCause();
+        }
+        return root.getMessage() != null ? root.getMessage() : root.getClass().getSimpleName();
     }
 }

@@ -51,7 +51,7 @@ public class Candidate {
     @Column(name = "joining_date", nullable = false)
     private LocalDate joiningDate;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = GenderConverter.class)
     private Gender gender;
 
     @Column(length = 100)
@@ -75,7 +75,7 @@ public class Candidate {
     @Column(length = 100)
     private String course;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = TrainingModeConverter.class)
     @Column(name = "batch_type")
     private TrainingMode batchType;
 
@@ -85,11 +85,11 @@ public class Candidate {
     @Column(length = 150)
     private String trainer;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = CandidateStatusConverter.class)
     @Column(nullable = false)
     private CandidateStatus status;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = EligibilityConverter.class)
     private Eligibility eligibility;
 
     @Column(columnDefinition = "TEXT")

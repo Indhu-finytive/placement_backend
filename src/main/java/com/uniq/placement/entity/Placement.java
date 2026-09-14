@@ -44,7 +44,7 @@ public class Placement {
     @Column(name = "due_period_days", nullable = false)
     private Integer duePeriodDays;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = DuePeriodConverter.class)
     @Column(name = "due_period_label")
     private DuePeriod duePeriodLabel;
 
@@ -66,7 +66,7 @@ public class Placement {
     @Column(name = "payment_terms", columnDefinition = "TEXT")
     private String paymentTerms;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = ReferralTypeConverter.class)
     @Column(name = "referral_type")
     private ReferralType referralType;
 
@@ -74,7 +74,7 @@ public class Placement {
     @JoinColumn(name = "share_team_id")
     private Team shareTeam;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = PlacementStatusEnumConverter.class)
     @Column(nullable = false)
     private PlacementStatusEnum status;
 

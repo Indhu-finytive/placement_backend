@@ -22,14 +22,30 @@ public interface CandidateRepository extends JpaRepository<Candidate, UUID> {
     boolean existsByMobileNumber(String mobileNumber);
 
     @Query("SELECT c FROM Candidate c WHERE " +
-           "(:search IS NULL OR LOWER(c.candidateName) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(c.mobileNumber) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(c.candidateCode) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "(:search IS NULL OR LOWER(c.candidateName) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+           "OR LOWER(c.mobileNumber) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+           "OR LOWER(c.candidateCode) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))) " +
            "AND (:teamId IS NULL OR c.assignedTeam.id = :teamId) " +
            "AND (:status IS NULL OR c.status = :status) " +
            "AND (:eligibility IS NULL OR c.eligibility = :eligibility) " +
-           "AND (:course IS NULL OR LOWER(c.course) = LOWER(:course)) " +
-           "AND (:teamIds IS NULL OR c.assignedTeam.id IN :teamIds)")
+           "AND (:course IS NULL OR LOWER(c.course) = LOWER(CAST(:course AS string)))")
+    Page<Candidate> findAllWithFilters(
+            @Param("search") String search,
+            @Param("teamId") UUID teamId,
+            @Param("status") CandidateStatus status,
+            @Param("eligibility") Eligibility eligibility,
+            @Param("course") String course,
+            Pageable pageable);
+
+    @Query("SELECT c FROM Candidate c WHERE " +
+           "(:search IS NULL OR LOWER(c.candidateName) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+           "OR LOWER(c.mobileNumber) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+           "OR LOWER(c.candidateCode) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))) " +
+           "AND (:teamId IS NULL OR c.assignedTeam.id = :teamId) " +
+           "AND (:status IS NULL OR c.status = :status) " +
+           "AND (:eligibility IS NULL OR c.eligibility = :eligibility) " +
+           "AND (:course IS NULL OR LOWER(c.course) = LOWER(CAST(:course AS string))) " +
+           "AND c.assignedTeam.id IN :teamIds")
     Page<Candidate> findAllWithFilters(
             @Param("search") String search,
             @Param("teamId") UUID teamId,
@@ -39,8 +55,8 @@ public interface CandidateRepository extends JpaRepository<Candidate, UUID> {
             @Param("teamIds") Collection<UUID> teamIds,
             Pageable pageable);
 
-    @Query("SELECT COALESCE(MAX(CAST(SUBSTRING(c.candidateCode, LENGTH(:prefix) + 1) AS int)), 0) " +
-           "FROM Candidate c WHERE c.candidateCode LIKE CONCAT(:prefix, '%')")
+    @Query("SELECT COALESCE(MAX(CAST(SUBSTRING(c.candidateCode, LENGTH(:prefix) + 2) AS int)), 0) " +
+           "FROM Candidate c WHERE c.candidateCode LIKE CONCAT(:prefix, '-%')")
     int findMaxSequenceByPrefix(@Param("prefix") String prefix);
 
     @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.placement LEFT JOIN FETCH c.payments " +

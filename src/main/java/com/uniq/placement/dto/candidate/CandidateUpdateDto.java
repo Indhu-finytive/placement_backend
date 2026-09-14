@@ -28,6 +28,8 @@ public class CandidateUpdateDto {
     private String collegeName;
     private String currentLocation;
     private String course;
+    private String batch;
+    private String branch;
     private TrainingMode batchType;
     private String trainer;
     private UUID assignedTeamId;

@@ -1,7 +1,6 @@
 package com.uniq.placement.entity;
 
-import com.uniq.placement.entity.enums.ActiveStatus;
-import com.uniq.placement.entity.enums.LedgerType;
+import com.uniq.placement.entity.enums.*;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -27,7 +26,7 @@ public class AccountHolder {
     @Column(name = "display_name", nullable = false, length = 150)
     private String displayName;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = LedgerTypeConverter.class)
     @Column(name = "linked_ledger_type", nullable = false)
     private LedgerType linkedLedgerType;
 
@@ -47,7 +46,7 @@ public class AccountHolder {
     @Column(name = "payment_type", length = 50)
     private String paymentType;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = ActiveStatusConverter.class)
     @Column(nullable = false)
     private ActiveStatus status;
 
