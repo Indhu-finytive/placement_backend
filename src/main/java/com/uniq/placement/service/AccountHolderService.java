@@ -5,18 +5,23 @@ import com.uniq.placement.dto.account.AccountHolderResponseDto;
 import com.uniq.placement.dto.account.PaymentAccountSummaryDto;
 import com.uniq.placement.dto.payment.PaymentResponseDto;
 import com.uniq.placement.entity.AccountHolder;
+import com.uniq.placement.entity.AccountHolderHistory;
 import com.uniq.placement.entity.Team;
 import com.uniq.placement.entity.enums.ActiveStatus;
 import com.uniq.placement.exception.ResourceNotFoundException;
+import com.uniq.placement.repository.AccountHolderHistoryRepository;
 import com.uniq.placement.repository.AccountHolderRepository;
 import com.uniq.placement.repository.PaymentRepository;
 import com.uniq.placement.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +32,7 @@ import java.util.stream.Collectors;
 public class AccountHolderService {
 
     private final AccountHolderRepository accountHolderRepository;
+    private final AccountHolderHistoryRepository accountHolderHistoryRepository;
     private final TeamRepository teamRepository;
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
@@ -60,7 +66,10 @@ public class AccountHolderService {
         ah.setStatus(dto.getStatus());
         ah.setRemarks(dto.getRemarks());
         
-        return mapToDto(accountHolderRepository.save(ah));
+        ah = accountHolderRepository.save(ah);
+        saveHistory(ah.getId(), "Account holder created", "CREATE");
+        
+        return mapToDto(ah);
     }
 
     @Transactional
@@ -87,7 +96,29 @@ public class AccountHolderService {
         if (dto.getStatus() != null) ah.setStatus(dto.getStatus());
         if (dto.getRemarks() != null) ah.setRemarks(dto.getRemarks());
         
-        return mapToDto(accountHolderRepository.save(ah));
+        ah = accountHolderRepository.save(ah);
+        saveHistory(ah.getId(), "Account holder updated", "UPDATE");
+        
+        return mapToDto(ah);
+    }
+    
+    private void saveHistory(UUID accountHolderId, String message, String actionType) {
+        String username = "system";
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null) {
+            username = auth.getName();
+        }
+        
+        AccountHolderHistory history = AccountHolderHistory.builder()
+                .accountHoldersId(accountHolderId)
+                .userId(username)
+                .actionBy(username)
+                .actionType(actionType)
+                .message(message)
+                .actionAt(Instant.now())
+                .build();
+                
+        accountHolderHistoryRepository.save(history);
     }
     
     @Transactional(readOnly = true)

@@ -1,4 +1,5 @@
 com\uniq\placement\dto\branch\BranchHistoryResponseDto.class
+com\uniq\placement\entity\AccountHolderHistory$AccountHolderHistoryBuilder.class
 com\uniq\placement\repository\BatchRepository.class
 com\uniq\placement\dto\candidate\CandidateUpdateDto.class
 com\uniq\placement\dto\common\ValidationProblemDto$ValidationProblemDtoBuilder.class
@@ -104,6 +105,7 @@ com\uniq\placement\dto\branch\BranchInputDto.class
 com\uniq\placement\repository\DocumentRepository.class
 com\uniq\placement\entity\enums\Gender.class
 com\uniq\placement\controller\SettlementController.class
+com\uniq\placement\entity\AccountHolderHistory.class
 com\uniq\placement\dto\account\AccountHolderResponseDto.class
 com\uniq\placement\dto\common\ProblemDto.class
 com\uniq\placement\entity\RolePermission.class
@@ -130,6 +132,7 @@ com\uniq\placement\entity\Batch.class
 com\uniq\placement\entity\PlacementDueDateOverride$PlacementDueDateOverrideBuilder.class
 com\uniq\placement\dto\settlement\PartnerBalanceDto.class
 com\uniq\placement\exception\GlobalExceptionHandler.class
+com\uniq\placement\repository\AccountHolderHistoryRepository.class
 com\uniq\placement\dto\report\ReportOverviewDto.class
 com\uniq\placement\controller\BranchController.class
 com\uniq\placement\entity\Payment.class

@@ -361,3 +361,15 @@ Ref: payments.account_holder_id > users.id
 Ref: payments.received_by > users.id
 
 Ref: audit_logs.user_id > users.id
+-- changeset schema:account_holders_history
+CREATE TABLE IF NOT EXISTS account_holders_history (
+    history_id BIGSERIAL PRIMARY KEY,
+    account_holders_id UUID NOT NULL,
+    user_id VARCHAR(50) NOT NULL,
+    message TEXT,
+    action_type VARCHAR(50),
+    action_by VARCHAR(50),
+    action_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_account_holders_history_account_holders
+        FOREIGN KEY (account_holders_id) REFERENCES account_holders(id) ON DELETE CASCADE
+);

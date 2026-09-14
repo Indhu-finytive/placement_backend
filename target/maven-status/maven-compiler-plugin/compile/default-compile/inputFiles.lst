@@ -56,6 +56,7 @@ C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\pl
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\dto\user\UserStatusUpdateDto.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\dto\user\UserUpdateDto.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\AccountHolder.java
+C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\AccountHolderHistory.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\AuditLog.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\Batch.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\entity\Branch.java
@@ -94,6 +95,7 @@ C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\pl
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\exception\GlobalExceptionHandler.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\exception\ResourceNotFoundException.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\PlacementBackendApplication.java
+C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\repository\AccountHolderHistoryRepository.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\repository\AccountHolderRepository.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\repository\AuditLogRepository.java
 C:\Users\Admin\Documents\Hussain Sir\placement_backend\src\main\java\com\uniq\placement\repository\BatchRepository.java
