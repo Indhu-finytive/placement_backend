@@ -145,8 +145,12 @@ public class AccountHolderService {
                 dto.setPercentageOfCollection(BigDecimal.ZERO);
             }
             
-            java.sql.Date sqlDate = (java.sql.Date) row[3];
-            if (sqlDate != null) dto.setLastTransactionDate(sqlDate.toLocalDate());
+            Object lastTransactionDate = row[3];
+            if (lastTransactionDate instanceof LocalDate date) {
+                dto.setLastTransactionDate(date);
+            } else if (lastTransactionDate instanceof java.sql.Date date) {
+                dto.setLastTransactionDate(date.toLocalDate());
+            }
             
             return dto;
         }).collect(Collectors.toList());

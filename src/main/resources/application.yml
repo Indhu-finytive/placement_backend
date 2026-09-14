@@ -3,9 +3,12 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/placement_db
-    username: postgres
-    password: Finytive@123
+#    url: jdbc:postgresql://localhost:5432/placement_db
+#    username: postgres
+#    password: Finytive@123
+    url: jdbc:postgresql://50.117.0.164:5432/placement_console
+    username: placement_admin
+    password:  Finytive.placement@123
     driver-class-name: org.postgresql.Driver
 
   jpa:
