@@ -27,7 +27,6 @@ public class PaymentCreateDto {
 
     private String accountName;
 
-    @NotNull(message = "Account holder is required")
     private UUID accountHolderId;
 
     private String referenceNumber;

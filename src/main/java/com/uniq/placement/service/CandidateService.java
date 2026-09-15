@@ -48,18 +48,33 @@ public class CandidateService {
         Pageable pageable = PageRequest.of(safePage - 1, safePageSize);
         
         User currentUser = getCurrentUser();
-        Collection<UUID> teamIds = currentUser.getRole() == UserRole.ADMIN ? null : 
+        boolean isFullAccess = currentUser.getRole() == UserRole.ADMIN || 
+                               currentUser.getAccess() == AccessLevel.FULL_ACCESS;
+        Collection<UUID> teamIds = isFullAccess ? null : 
             currentUser.getTeams().stream().map(Team::getId).collect(Collectors.toList());
             
-        UUID teamIdFilter = team != null && !team.isBlank() ? UUID.fromString(team) : null;
-
-        if (currentUser.getRole() != UserRole.ADMIN && teamIds.isEmpty()) {
-            return new PageDto<>(List.of(), safePage, safePageSize, 0);
+        UUID teamIdFilter = null;
+        if (team != null && !team.isBlank() && !"All teams".equalsIgnoreCase(team) && !"All Teams".equalsIgnoreCase(team)) {
+            try {
+                teamIdFilter = UUID.fromString(team);
+            } catch (IllegalArgumentException e) {
+                teamIdFilter = teamRepository.findAll().stream()
+                        .filter(t -> t.getName().equalsIgnoreCase(team.trim()))
+                        .map(Team::getId)
+                        .findFirst()
+                        .orElse(null);
+            }
         }
 
-        Page<Candidate> candidatePage = currentUser.getRole() == UserRole.ADMIN
-                ? candidateRepository.findAllWithFilters(search, teamIdFilter, status, eligibility, course, pageable)
-                : candidateRepository.findAllWithFilters(search, teamIdFilter, status, eligibility, course, teamIds, pageable);
+        Page<Candidate> candidatePage;
+        if (isFullAccess) {
+            candidatePage = candidateRepository.findAllWithFilters(search, teamIdFilter, status, eligibility, course, pageable);
+        } else if (teamIds != null && !teamIds.isEmpty()) {
+            candidatePage = candidateRepository.findAllWithFilters(search, teamIdFilter, status, eligibility, course, teamIds, pageable);
+        } else {
+            // User has no assigned teams yet: show all candidates or unassigned candidates
+            candidatePage = candidateRepository.findAllWithFilters(search, teamIdFilter, status, eligibility, course, pageable);
+        }
 
         List<CandidateResponseDto> dtos = candidatePage.getContent().stream()
                 .map(this::mapToResponseDto)
@@ -74,7 +89,12 @@ public class CandidateService {
             throw new DuplicateResourceException("Candidate with mobile " + dto.getMobileNumber() + " already exists");
         }
 
-        Team assignedTeam = teamRepository.findById(dto.getAssignedTeamId())
+        User currentUser = getCurrentUser();
+        UUID requestedTeamId = dto.getAssignedTeamId();
+        UUID assignedTeamId = currentUser.getRole() == UserRole.ADMIN
+            ? requestedTeamId
+            : getOnlyAllowedTeamId(currentUser, requestedTeamId);
+        Team assignedTeam = teamRepository.findById(assignedTeamId)
                 .orElseThrow(() -> new ResourceNotFoundException("Team not found"));
         Branch branch = resolveBranch(dto.getBranch(), assignedTeam);
         Batch batch = resolveBatch(dto.getBatch(), dto.getBatchId(), branch, assignedTeam, dto.getCourse(), dto.getBatchType(), dto.getTrainer());
@@ -105,7 +125,6 @@ public class CandidateService {
         candidate.setEligibility(dto.getEligibility() != null ? dto.getEligibility() : Eligibility.ELIGIBLE);
         candidate.setRemarks(dto.getRemarks());
         
-        User currentUser = getCurrentUser();
         candidate.setCreatedBy(currentUser);
         candidate.setUpdatedBy(currentUser);
 
@@ -145,6 +164,7 @@ public class CandidateService {
     public CandidateResponseDto getCandidate(UUID id) {
         Candidate candidate = candidateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Candidate not found"));
+        assertTeamAccess(candidate.getAssignedTeam(), getCurrentUser());
         return mapToResponseDto(candidate);
     }
 
@@ -152,6 +172,8 @@ public class CandidateService {
     public CandidateResponseDto updateCandidate(UUID id, CandidateUpdateDto dto) {
         Candidate candidate = candidateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Candidate not found"));
+        User currentUser = getCurrentUser();
+        assertTeamAccess(candidate.getAssignedTeam(), currentUser);
 
         // Capture old values for change detection
         CandidateStatus oldStatus = candidate.getStatus();
@@ -183,7 +205,10 @@ public class CandidateService {
         if (dto.getRemarks() != null) candidate.setRemarks(dto.getRemarks());
 
         if (dto.getAssignedTeamId() != null) {
-            Team assignedTeam = teamRepository.findById(dto.getAssignedTeamId())
+            UUID assignedTeamId = currentUser.getRole() == UserRole.ADMIN
+                ? dto.getAssignedTeamId()
+                : getOnlyAllowedTeamId(currentUser, dto.getAssignedTeamId());
+            Team assignedTeam = teamRepository.findById(assignedTeamId)
                     .orElseThrow(() -> new ResourceNotFoundException("Team not found"));
             candidate.setAssignedTeam(assignedTeam);
         }
@@ -205,7 +230,6 @@ public class CandidateService {
             if (candidate.getBranch() == null) candidate.setBranch(batch.getBranch());
         }
 
-        User currentUser = getCurrentUser();
         candidate.setUpdatedBy(currentUser);
         
         Candidate savedCandidate = candidateRepository.save(candidate);
@@ -266,6 +290,27 @@ public class CandidateService {
                 .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
     }
 
+    private UUID getOnlyAllowedTeamId(User user, UUID requestedTeamId) {
+        if (requestedTeamId == null) {
+            throw new org.springframework.security.access.AccessDeniedException("A team is required");
+        }
+        boolean allowed = user.getTeams().stream()
+                .anyMatch(team -> team.getId().equals(requestedTeamId));
+        if (!allowed) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "You can only manage candidates in your assigned team");
+        }
+        return requestedTeamId;
+    }
+
+    private void assertTeamAccess(Team team, User user) {
+        if (user.getRole() != UserRole.ADMIN &&
+                (team == null || user.getTeams().stream().noneMatch(allowed -> allowed.getId().equals(team.getId())))) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "You can only access candidates in your assigned team");
+        }
+    }
+
     private CandidateResponseDto mapToResponseDto(Candidate candidate) {
         CandidateResponseDto dto = new CandidateResponseDto();
         dto.setId(candidate.getId());
@@ -290,7 +335,11 @@ public class CandidateService {
             dto.setBranchName(candidate.getBranch().getName());
         }
         dto.setTrainer(candidate.getTrainer());
-        if (candidate.getAssignedTeam() != null) dto.setAssignedTeamId(candidate.getAssignedTeam().getId());
+        if (candidate.getAssignedTeam() != null) {
+            dto.setAssignedTeamId(candidate.getAssignedTeam().getId());
+            dto.setTeamName(candidate.getAssignedTeam().getName());
+            dto.setTeam(candidate.getAssignedTeam().getName());
+        }
         dto.setStatus(candidate.getStatus());
         dto.setEligibility(candidate.getEligibility());
         dto.setRemarks(candidate.getRemarks());

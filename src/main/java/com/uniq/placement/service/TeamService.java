@@ -4,11 +4,14 @@ import com.uniq.placement.dto.team.TeamInputDto;
 import com.uniq.placement.dto.team.TeamResponseDto;
 import com.uniq.placement.entity.Branch;
 import com.uniq.placement.entity.Team;
+import com.uniq.placement.entity.User;
 import com.uniq.placement.entity.enums.ActiveStatus;
+import com.uniq.placement.entity.enums.UserRole;
 import com.uniq.placement.exception.DuplicateResourceException;
 import com.uniq.placement.exception.ResourceNotFoundException;
 import com.uniq.placement.repository.BranchRepository;
 import com.uniq.placement.repository.TeamRepository;
+import com.uniq.placement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,17 +29,28 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final BranchRepository branchRepository;
     private final TeamHistoryService teamHistoryService;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<TeamResponseDto> getTeams(ActiveStatus status) {
+        User currentUser = getCurrentUser();
         List<Team> teams = status == null
                 ? teamRepository.findAllByOrderByNameAsc()
                 : teamRepository.findByIsActive(status == ActiveStatus.ACTIVE);
+        if (currentUser.getRole() != UserRole.ADMIN) {
+            var allowedTeamIds = currentUser.getTeams().stream()
+                .map(Team::getId)
+                .collect(Collectors.toSet());
+            teams = teams.stream()
+                .filter(team -> allowedTeamIds.contains(team.getId()))
+                .collect(Collectors.toList());
+        }
         return teams.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     @Transactional
     public TeamResponseDto createTeam(TeamInputDto dto) {
+        requireAdmin();
         if (teamRepository.existsByName(dto.getName())) {
             throw new DuplicateResourceException("Team name already exists");
         }
@@ -56,6 +70,7 @@ public class TeamService {
 
     @Transactional
     public TeamResponseDto updateTeam(UUID id, TeamInputDto dto) {
+        requireAdmin();
         Team team = teamRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Team not found"));
 
@@ -87,6 +102,7 @@ public class TeamService {
 
     @Transactional
     public TeamResponseDto toggleTeam(UUID id, ActiveStatus status) {
+        requireAdmin();
         Team team = teamRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Team not found"));
         boolean wasActive = team.getIsActive();
@@ -143,5 +159,17 @@ public class TeamService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String userName = auth != null && auth.getName() != null ? auth.getName() : "system";
         teamHistoryService.log(teamId, userName, actionType, message);
+    }
+
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
+    }
+
+    private void requireAdmin() {
+        if (getCurrentUser().getRole() != UserRole.ADMIN) {
+            throw new org.springframework.security.access.AccessDeniedException("Only administrators can manage teams");
+        }
     }
 }

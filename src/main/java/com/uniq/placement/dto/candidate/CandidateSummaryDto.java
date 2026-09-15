@@ -11,4 +11,6 @@ public class CandidateSummaryDto {
     private String candidateCode;
     private String mobileNumber;
     private UUID assignedTeamId;
+    private String teamName;
+    private String team;
 }

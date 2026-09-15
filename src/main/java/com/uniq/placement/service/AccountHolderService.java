@@ -7,12 +7,16 @@ import com.uniq.placement.dto.payment.PaymentResponseDto;
 import com.uniq.placement.entity.AccountHolder;
 import com.uniq.placement.entity.AccountHolderHistory;
 import com.uniq.placement.entity.Team;
+import com.uniq.placement.entity.User;
 import com.uniq.placement.entity.enums.ActiveStatus;
+import com.uniq.placement.entity.enums.LedgerType;
+import com.uniq.placement.entity.enums.UserRole;
 import com.uniq.placement.exception.ResourceNotFoundException;
 import com.uniq.placement.repository.AccountHolderHistoryRepository;
 import com.uniq.placement.repository.AccountHolderRepository;
 import com.uniq.placement.repository.PaymentRepository;
 import com.uniq.placement.repository.TeamRepository;
+import com.uniq.placement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,6 +40,7 @@ public class AccountHolderService {
     private final TeamRepository teamRepository;
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<AccountHolderResponseDto> getAccountHolders(ActiveStatus status) {
@@ -43,6 +48,23 @@ public class AccountHolderService {
                 accountHolderRepository.findByStatus(status) : 
                 accountHolderRepository.findAll();
                 
+        User currentUser = getCurrentUser();
+        if (currentUser != null && currentUser.getRole() != UserRole.ADMIN) {
+            var allowedTeamIds = currentUser.getTeams().stream()
+                .map(Team::getId)
+                .collect(Collectors.toSet());
+            var allowedTeamNames = currentUser.getTeams().stream()
+                .map(t -> t.getName().toLowerCase())
+                .collect(Collectors.toSet());
+            accounts = accounts.stream()
+                .filter(account -> account.getLinkedLedgerType() == LedgerType.COMPANY ||
+                    account.getLinkedTeam() == null ||
+                    (allowedTeamIds.contains(account.getLinkedTeam().getId()) ||
+                     (account.getLinkedTeam().getName() != null &&
+                      allowedTeamNames.contains(account.getLinkedTeam().getName().toLowerCase()))))
+                .collect(Collectors.toList());
+        }
+
         return accounts.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
@@ -169,7 +191,10 @@ public class AccountHolderService {
         dto.setName(ah.getName());
         dto.setDisplayName(ah.getDisplayName());
         dto.setLinkedLedgerType(ah.getLinkedLedgerType());
-        if (ah.getLinkedTeam() != null) dto.setLinkedTeam(ah.getLinkedTeam().getId());
+        if (ah.getLinkedTeam() != null) {
+            dto.setLinkedTeam(ah.getLinkedTeam().getName());
+            dto.setLinkedTeamId(ah.getLinkedTeam().getId());
+        }
         dto.setBank(ah.getBank());
         dto.setLast4(ah.getLast4());
         dto.setUpi(ah.getUpi());
@@ -177,5 +202,13 @@ public class AccountHolderService {
         dto.setStatus(ah.getStatus());
         dto.setRemarks(ah.getRemarks());
         return dto;
+    }
+
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null || "anonymousUser".equalsIgnoreCase(authentication.getName())) {
+            return null;
+        }
+        return userRepository.findByUsername(authentication.getName()).orElse(null);
     }
 }

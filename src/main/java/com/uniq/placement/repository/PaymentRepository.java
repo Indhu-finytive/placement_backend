@@ -29,10 +29,10 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
            "(:to IS NULL OR p.paymentDate <= :to) AND " +
            "(:teamIds IS NULL OR p.candidate.assignedTeam.id IN :teamIds) AND " +
            "(:userId IS NULL OR p.receivedBy.id = :userId) AND " +
-           "(:accountName IS NULL OR LOWER(p.accountName) = LOWER(:accountName)) AND " +
+           "(:accountName IS NULL OR LOWER(p.accountName) = LOWER(CAST(:accountName AS string))) AND " +
            "(:paymentType IS NULL OR p.paymentType = :paymentType) AND " +
-           "(:search IS NULL OR LOWER(p.candidate.candidateName) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(p.candidate.candidateCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "(:search IS NULL OR LOWER(p.candidate.candidateName) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+           "OR LOWER(p.candidate.candidateCode) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))")
     List<Payment> findCollections(
             @Param("from") LocalDate from,
             @Param("to") LocalDate to,
@@ -48,4 +48,8 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     @Query("SELECT p.accountName, COUNT(p), SUM(p.amount), MAX(p.paymentDate) FROM Payment p " +
            "GROUP BY p.accountName ORDER BY SUM(p.amount) DESC")
     List<Object[]> getAccountSummaries();
+
+    @Query("SELECT COALESCE(MAX(CAST(SUBSTRING(p.paymentCode, LENGTH(:prefix) + 2) AS int)), 100) " +
+           "FROM Payment p WHERE p.paymentCode LIKE CONCAT(:prefix, '-%')")
+    int findMaxSequenceByPrefix(@Param("prefix") String prefix);
 }

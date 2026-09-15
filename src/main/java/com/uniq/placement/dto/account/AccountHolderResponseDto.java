@@ -12,7 +12,8 @@ public class AccountHolderResponseDto {
     private String name;
     private String displayName;
     private LedgerType linkedLedgerType;
-    private UUID linkedTeam;
+    private String linkedTeam;
+    private UUID linkedTeamId;
     private String bank;
     private String last4;
     private String upi;

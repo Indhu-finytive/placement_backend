@@ -8,7 +8,9 @@ import com.uniq.placement.entity.AccountHolder;
 import com.uniq.placement.entity.Candidate;
 import com.uniq.placement.entity.Payment;
 import com.uniq.placement.entity.User;
+import com.uniq.placement.entity.enums.PaymentMode;
 import com.uniq.placement.entity.enums.PaymentType;
+import com.uniq.placement.exception.BusinessRuleException;
 import com.uniq.placement.exception.ResourceNotFoundException;
 import com.uniq.placement.repository.AccountHolderRepository;
 import com.uniq.placement.repository.CandidateRepository;
@@ -81,8 +83,13 @@ public class PaymentService {
         Candidate candidate = candidateRepository.findById(candidateId)
                 .orElseThrow(() -> new ResourceNotFoundException("Candidate not found"));
                 
-        AccountHolder accountHolder = accountHolderRepository.findById(dto.getAccountHolderId())
-                .orElseThrow(() -> new ResourceNotFoundException("Account holder not found"));
+        AccountHolder accountHolder = null;
+        if (dto.getAccountHolderId() != null) {
+            accountHolder = accountHolderRepository.findById(dto.getAccountHolderId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Account holder not found"));
+        } else if (dto.getPaymentMode() != PaymentMode.CASH) {
+            throw new BusinessRuleException("Account holder is required for non-cash payment");
+        }
                 
         User currentUser = getCurrentUser();
         

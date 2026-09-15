@@ -36,6 +36,8 @@ public class CandidateResponseDto {
     private String branchName;
     private String trainer;
     private UUID assignedTeamId;
+    private String teamName;
+    private String team;
     private CandidateStatus status;
     private Eligibility eligibility;
     private String remarks;

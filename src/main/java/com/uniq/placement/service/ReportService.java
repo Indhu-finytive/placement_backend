@@ -92,7 +92,11 @@ public class ReportService {
             cdto.setCandidateName(p.getCandidate().getCandidateName());
             cdto.setCandidateCode(p.getCandidate().getCandidateCode());
             cdto.setMobileNumber(p.getCandidate().getMobileNumber());
-            if (p.getCandidate().getAssignedTeam() != null) cdto.setAssignedTeamId(p.getCandidate().getAssignedTeam().getId());
+            if (p.getCandidate().getAssignedTeam() != null) {
+                cdto.setAssignedTeamId(p.getCandidate().getAssignedTeam().getId());
+                cdto.setTeamName(p.getCandidate().getAssignedTeam().getName());
+                cdto.setTeam(p.getCandidate().getAssignedTeam().getName());
+            }
             
             dto.setCandidate(cdto);
             return dto;
@@ -136,7 +140,11 @@ public class ReportService {
                 cdto.setCandidateName(c.getCandidateName());
                 cdto.setCandidateCode(c.getCandidateCode());
                 cdto.setMobileNumber(c.getMobileNumber());
-                if (c.getAssignedTeam() != null) cdto.setAssignedTeamId(c.getAssignedTeam().getId());
+                if (c.getAssignedTeam() != null) {
+                    cdto.setAssignedTeamId(c.getAssignedTeam().getId());
+                    cdto.setTeamName(c.getAssignedTeam().getName());
+                    cdto.setTeam(c.getAssignedTeam().getName());
+                }
                 
                 dto.setCandidate(cdto);
                 dto.setCompany(c.getPlacement().getCompanyName());

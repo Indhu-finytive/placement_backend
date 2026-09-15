@@ -14,7 +14,7 @@ import java.util.UUID;
 public interface SettlementRepository extends JpaRepository<Settlement, UUID> {
 
     @Query("SELECT s FROM Settlement s WHERE " +
-           "(:partner IS NULL OR LOWER(s.partner) = LOWER(:partner)) AND " +
+           "(:partner IS NULL OR LOWER(s.partner) = LOWER(CAST(:partner AS string))) AND " +
            "(:from IS NULL OR s.settlementDate >= :from) AND " +
            "(:to IS NULL OR s.settlementDate <= :to) " +
            "ORDER BY s.settlementDate DESC")

@@ -23,7 +23,6 @@ public class InitialDocumentFeeDto {
 
     private String account;
 
-    @NotNull(message = "Account holder is required")
     private UUID accountHolderId;
 
     private String paymentReferenceId;

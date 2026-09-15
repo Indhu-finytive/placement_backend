@@ -45,7 +45,7 @@ public interface CandidateRepository extends JpaRepository<Candidate, UUID> {
            "AND (:status IS NULL OR c.status = :status) " +
            "AND (:eligibility IS NULL OR c.eligibility = :eligibility) " +
            "AND (:course IS NULL OR LOWER(c.course) = LOWER(CAST(:course AS string))) " +
-           "AND c.assignedTeam.id IN :teamIds")
+           "AND (c.assignedTeam.id IN :teamIds OR c.assignedTeam IS NULL)")
     Page<Candidate> findAllWithFilters(
             @Param("search") String search,
             @Param("teamId") UUID teamId,

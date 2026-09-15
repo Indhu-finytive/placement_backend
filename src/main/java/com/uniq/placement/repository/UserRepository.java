@@ -5,6 +5,7 @@ import com.uniq.placement.entity.enums.ActiveStatus;
 import com.uniq.placement.entity.enums.UserRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +17,7 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
 
+    @EntityGraph(attributePaths = {"teams"})
     Optional<User> findByUsername(String username);
 
     boolean existsByUsername(String username);
