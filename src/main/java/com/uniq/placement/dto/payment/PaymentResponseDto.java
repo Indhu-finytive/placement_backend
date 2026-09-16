@@ -25,5 +25,9 @@ public class PaymentResponseDto {
     private String receivedByName;
     private UUID teamId;
     private String teamName;
+    private UUID candidateId;
+    private String candidateName;
+    private UUID candidateTeamId;
+    private String candidateTeamName;
     private ShareAllocationResponseDto allocation;
 }

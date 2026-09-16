@@ -158,6 +158,15 @@ public class PaymentService {
             dto.setTeamId(payment.getCandidate().getAssignedTeam().getId());
             dto.setTeamName(payment.getCandidate().getAssignedTeam().getName());
         }
+
+        if (payment.getCandidate() != null) {
+            dto.setCandidateId(payment.getCandidate().getId());
+            dto.setCandidateName(payment.getCandidate().getCandidateName());
+            if (payment.getCandidate().getAssignedTeam() != null) {
+                dto.setCandidateTeamId(payment.getCandidate().getAssignedTeam().getId());
+                dto.setCandidateTeamName(payment.getCandidate().getAssignedTeam().getName());
+            }
+        }
         
         if (payment.getReceivedBy() != null) {
             dto.setReceivedById(payment.getReceivedBy().getId());
