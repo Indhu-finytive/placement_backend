@@ -8,13 +8,16 @@ import com.uniq.placement.entity.AccountHolder;
 import com.uniq.placement.entity.Candidate;
 import com.uniq.placement.entity.Payment;
 import com.uniq.placement.entity.User;
+import com.uniq.placement.entity.enums.LedgerType;
 import com.uniq.placement.entity.enums.PaymentMode;
 import com.uniq.placement.entity.enums.PaymentType;
 import com.uniq.placement.exception.BusinessRuleException;
 import com.uniq.placement.exception.ResourceNotFoundException;
+import com.uniq.placement.entity.Team;
 import com.uniq.placement.repository.AccountHolderRepository;
 import com.uniq.placement.repository.CandidateRepository;
 import com.uniq.placement.repository.PaymentRepository;
+import com.uniq.placement.repository.TeamRepository;
 import com.uniq.placement.repository.UserRepository;
 import com.uniq.placement.util.PaymentIdGenerator;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +37,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final CandidateRepository candidateRepository;
     private final AccountHolderRepository accountHolderRepository;
+    private final TeamRepository teamRepository;
     private final UserRepository userRepository;
     private final PaymentIdGenerator paymentIdGenerator;
 
@@ -93,6 +97,20 @@ public class PaymentService {
                 
         User currentUser = getCurrentUser();
         
+        Team paymentTeam = null;
+        if (dto.getTeamId() != null) {
+            paymentTeam = teamRepository.findById(dto.getTeamId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Team not found"));
+        } else if (dto.getAccountName() != null && dto.getAccountName().toLowerCase().contains("company")) {
+            paymentTeam = null;
+        } else if (accountHolder != null && accountHolder.getLinkedLedgerType() == LedgerType.COMPANY) {
+            paymentTeam = null;
+        } else if (accountHolder != null && accountHolder.getLinkedTeam() != null) {
+            paymentTeam = accountHolder.getLinkedTeam();
+        } else if (candidate.getAssignedTeam() != null) {
+            paymentTeam = candidate.getAssignedTeam();
+        }
+
         Payment payment = new Payment();
         payment.setPaymentCode(paymentIdGenerator.generatePaymentId());
         payment.setCandidate(candidate);
@@ -106,6 +124,12 @@ public class PaymentService {
         payment.setReferenceNumber(dto.getReferenceNumber());
         payment.setRemarks(dto.getRemarks());
         payment.setReceivedBy(currentUser);
+        payment.setTeam(paymentTeam);
+
+        if (paymentTeam != null && (candidate.getAssignedTeam() == null || !paymentTeam.getId().equals(candidate.getAssignedTeam().getId()))) {
+            candidate.setAssignedTeam(paymentTeam);
+            candidateRepository.save(candidate);
+        }
         
         Payment savedPayment = paymentRepository.save(payment);
         return mapToDto(savedPayment);
@@ -123,6 +147,17 @@ public class PaymentService {
         if (payment.getAccountHolder() != null) dto.setAccountHolderName(payment.getAccountHolder().getDisplayName());
         dto.setReferenceNumber(payment.getReferenceNumber());
         dto.setRemarks(payment.getRemarks());
+        
+        if (payment.getTeam() != null) {
+            dto.setTeamId(payment.getTeam().getId());
+            dto.setTeamName(payment.getTeam().getName());
+        } else if (payment.getAccountHolder() != null && payment.getAccountHolder().getLinkedLedgerType() == LedgerType.COMPANY) {
+            dto.setTeamId(null);
+            dto.setTeamName("Company Team");
+        } else if (payment.getCandidate() != null && payment.getCandidate().getAssignedTeam() != null) {
+            dto.setTeamId(payment.getCandidate().getAssignedTeam().getId());
+            dto.setTeamName(payment.getCandidate().getAssignedTeam().getName());
+        }
         
         if (payment.getReceivedBy() != null) {
             dto.setReceivedById(payment.getReceivedBy().getId());

@@ -28,6 +28,7 @@ public class PaymentCreateDto {
     private String accountName;
 
     private UUID accountHolderId;
+    private UUID teamId;
 
     private String referenceNumber;
     private String remarks;

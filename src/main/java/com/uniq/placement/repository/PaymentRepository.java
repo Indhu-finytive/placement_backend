@@ -24,10 +24,10 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     int countByCandidateId(@Param("candidateId") UUID candidateId);
 
     @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.candidate LEFT JOIN FETCH p.accountHolder " +
-           "LEFT JOIN FETCH p.receivedBy LEFT JOIN FETCH p.allocation WHERE " +
+           "LEFT JOIN FETCH p.receivedBy LEFT JOIN FETCH p.allocation LEFT JOIN FETCH p.team WHERE " +
            "(:from IS NULL OR p.paymentDate >= :from) AND " +
            "(:to IS NULL OR p.paymentDate <= :to) AND " +
-           "(:teamIds IS NULL OR p.candidate.assignedTeam.id IN :teamIds) AND " +
+           "(:teamIds IS NULL OR (p.team.id IN :teamIds OR (p.team IS NULL AND p.candidate.assignedTeam.id IN :teamIds))) AND " +
            "(:userId IS NULL OR p.receivedBy.id = :userId) AND " +
            "(:accountName IS NULL OR LOWER(p.accountName) = LOWER(CAST(:accountName AS string))) AND " +
            "(:paymentType IS NULL OR p.paymentType = :paymentType) AND " +

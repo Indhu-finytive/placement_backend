@@ -23,5 +23,7 @@ public class PaymentResponseDto {
     private String remarks;
     private UUID receivedById;
     private String receivedByName;
+    private UUID teamId;
+    private String teamName;
     private ShareAllocationResponseDto allocation;
 }

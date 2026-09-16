@@ -12,4 +12,6 @@ public interface TeamRepository extends JpaRepository<Team, UUID> {
     List<Team> findByIsActive(Boolean isActive);
     List<Team> findAllByOrderByNameAsc();
     boolean existsByName(String name);
+    java.util.Optional<Team> findByName(String name);
+    java.util.Optional<Team> findByNameIgnoreCase(String name);
 }

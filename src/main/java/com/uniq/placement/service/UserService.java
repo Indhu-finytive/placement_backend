@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -97,19 +98,24 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (dto.getName() != null) user.setFullName(dto.getName());
-        if (dto.getMobile() != null) user.setMobileNumber(dto.getMobile());
-        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
+        if (dto.getName() != null && !dto.getName().isBlank()) user.setFullName(dto.getName().trim());
+        if (dto.getMobile() != null) user.setMobileNumber(dto.getMobile().trim());
+        if (dto.getEmail() != null) user.setEmail(dto.getEmail().trim());
         
-        if (dto.getUsername() != null && !dto.getUsername().equals(user.getUsername())) {
-            if (userRepository.existsByUsername(dto.getUsername())) {
+        if (dto.getUsername() != null && !dto.getUsername().isBlank() && !dto.getUsername().trim().equals(user.getUsername())) {
+            String trimmedUsername = dto.getUsername().trim();
+            if (userRepository.existsByUsername(trimmedUsername)) {
                 throw new DuplicateResourceException("Username already exists");
             }
-            user.setUsername(dto.getUsername());
+            user.setUsername(trimmedUsername);
         }
         
-        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
-            user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
+            String trimmedPass = dto.getPassword().trim();
+            if (trimmedPass.length() < 8) {
+                throw new BusinessRuleException("Password must be at least 8 characters");
+            }
+            user.setPasswordHash(passwordEncoder.encode(trimmedPass));
         }
         
         if (dto.getRole() != null) {
@@ -119,12 +125,20 @@ public class UserService {
         }
         if (dto.getStatus() != null) user.setIsActive(dto.getStatus() == ActiveStatus.ACTIVE);
 
-        if (dto.getTeams() != null && !dto.getTeams().isEmpty()) {
-            List<Team> teams = teamRepository.findAllById(dto.getTeams());
-            if (teams.size() != dto.getTeams().size()) {
-                throw new ResourceNotFoundException("One or more teams were not found");
+        if (dto.getTeams() != null) {
+            Set<Team> resolvedTeams = new HashSet<>();
+            for (String teamRef : dto.getTeams()) {
+                if (teamRef == null || teamRef.isBlank() || teamRef.equalsIgnoreCase("All teams")) {
+                    continue;
+                }
+                try {
+                    UUID teamUuid = UUID.fromString(teamRef.trim());
+                    teamRepository.findById(teamUuid).ifPresent(resolvedTeams::add);
+                } catch (IllegalArgumentException e) {
+                    teamRepository.findByNameIgnoreCase(teamRef.trim()).ifPresent(resolvedTeams::add);
+                }
             }
-            user.setTeams(new HashSet<>(teams));
+            user.setTeams(resolvedTeams);
         }
 
         User savedUser = userRepository.save(user);

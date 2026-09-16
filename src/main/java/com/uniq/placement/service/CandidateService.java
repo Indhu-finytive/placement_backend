@@ -146,6 +146,7 @@ public class CandidateService {
             paymentDto.setPaymentType(PaymentType.DOCUMENT_FEE);
             paymentDto.setAmount(feeDto.getAmount());
             paymentDto.setPaymentMode(feeDto.getMode());
+            paymentDto.setTeamId(feeDto.getTeamId());
             paymentDto.setAccountName(feeDto.getAccount());
             paymentDto.setAccountHolderId(feeDto.getAccountHolderId());
             paymentDto.setReferenceNumber(feeDto.getPaymentReferenceId());

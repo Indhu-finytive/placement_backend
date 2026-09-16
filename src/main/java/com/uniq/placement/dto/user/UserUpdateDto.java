@@ -17,10 +17,9 @@ public class UserUpdateDto {
     private String email;
     private String username;
     
-    @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
     
     private UserRole role;
-    private List<UUID> teams;
+    private List<String> teams;
     private ActiveStatus status;
 }

@@ -64,6 +64,10 @@ public class Payment {
     @JoinColumn(name = "received_by")
     private User receivedBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id")
+    private Team team;
+
     @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private ShareAllocation allocation;
 

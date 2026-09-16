@@ -21,6 +21,8 @@ public class InitialDocumentFeeDto {
     @NotNull(message = "Mode is required")
     private PaymentMode mode;
 
+    private UUID teamId;
+
     private String account;
 
     private UUID accountHolderId;
