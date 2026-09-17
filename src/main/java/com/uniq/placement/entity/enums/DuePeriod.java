@@ -1,5 +1,6 @@
 package com.uniq.placement.entity.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum DuePeriod {
@@ -16,9 +17,28 @@ public enum DuePeriod {
     @JsonValue
     public String getValue() { return value; }
 
+    @JsonCreator
     public static DuePeriod fromValue(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        String clean = value.trim();
         for (DuePeriod d : values()) {
-            if (d.value.equalsIgnoreCase(value)) return d;
+            if (d.name().equalsIgnoreCase(clean) || d.value.equalsIgnoreCase(clean)) {
+                return d;
+            }
+        }
+        String normalized = clean.replace(" ", "_");
+        for (DuePeriod d : values()) {
+            if (d.name().equalsIgnoreCase(normalized)) {
+                return d;
+            }
+        }
+        normalized = clean.replace("_", " ");
+        for (DuePeriod d : values()) {
+            if (d.value.equalsIgnoreCase(normalized)) {
+                return d;
+            }
         }
         throw new IllegalArgumentException("Unknown DuePeriod: " + value);
     }

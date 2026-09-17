@@ -1,5 +1,6 @@
 package com.uniq.placement.entity.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum Gender {
@@ -14,9 +15,16 @@ public enum Gender {
     @JsonValue
     public String getValue() { return value; }
 
+    @JsonCreator
     public static Gender fromValue(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        String clean = value.trim();
         for (Gender g : values()) {
-            if (g.value.equalsIgnoreCase(value)) return g;
+            if (g.name().equalsIgnoreCase(clean) || g.value.equalsIgnoreCase(clean)) {
+                return g;
+            }
         }
         throw new IllegalArgumentException("Unknown Gender: " + value);
     }

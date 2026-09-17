@@ -1,5 +1,6 @@
 package com.uniq.placement.entity.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ReferralType {
@@ -15,9 +16,28 @@ public enum ReferralType {
     @JsonValue
     public String getValue() { return value; }
 
+    @JsonCreator
     public static ReferralType fromValue(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        String clean = value.trim();
         for (ReferralType r : values()) {
-            if (r.value.equalsIgnoreCase(value)) return r;
+            if (r.name().equalsIgnoreCase(clean) || r.value.equalsIgnoreCase(clean)) {
+                return r;
+            }
+        }
+        String normalizedWithUnderscore = clean.replace(" ", "_");
+        for (ReferralType r : values()) {
+            if (r.name().equalsIgnoreCase(normalizedWithUnderscore)) {
+                return r;
+            }
+        }
+        String normalizedWithSpace = clean.replace("_", " ");
+        for (ReferralType r : values()) {
+            if (r.value.equalsIgnoreCase(normalizedWithSpace)) {
+                return r;
+            }
         }
         throw new IllegalArgumentException("Unknown ReferralType: " + value);
     }
