@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -143,6 +144,7 @@ public class CandidateService {
             InitialDocumentFeeDto feeDto = dto.getInitialDocumentFee();
             LocalDate feeDate = feeDto.getDate() != null ? feeDto.getDate()
                     : (dto.getJoiningDate() != null ? dto.getJoiningDate() : LocalDate.now());
+            PaymentCreateDto paymentDto = new PaymentCreateDto();
             paymentDto.setPaymentDate(feeDate);
             paymentDto.setPaymentType(PaymentType.DOCUMENT_FEE);
             paymentDto.setAmount(feeDto.getAmount());
