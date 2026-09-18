@@ -117,7 +117,7 @@ public class PaymentService {
         payment.setPlacement(candidate.getPlacement());
         payment.setPaymentType(dto.getPaymentType());
         payment.setAmount(dto.getAmount());
-        payment.setPaymentDate(dto.getPaymentDate());
+        payment.setPaymentDate(dto.getPaymentDate() != null ? dto.getPaymentDate() : LocalDate.now());
         payment.setPaymentMode(dto.getPaymentMode());
         payment.setAccountName(dto.getAccountName());
         payment.setAccountHolder(accountHolder);

@@ -15,7 +15,6 @@ public class InitialDocumentFeeDto {
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
     private BigDecimal amount;
 
-    @NotNull(message = "Date is required")
     private LocalDate date;
 
     @NotNull(message = "Mode is required")

@@ -7,7 +7,8 @@ public enum Course {
     JAVA("Java"),
     PYTHON("Python"),
     PRODUCTION_SUPPORT("Production Support"),
-    DEVOPS("Devops");
+    DEVOPS("Devops"),
+    DOTNET("Dotnet");
 
     private final String value;
 
@@ -38,6 +39,9 @@ public enum Course {
             if (c.value.equalsIgnoreCase(normalizedWithSpace)) {
                 return c;
             }
+        }
+        if (clean.equalsIgnoreCase(".net") || clean.equalsIgnoreCase("dot net") || clean.equalsIgnoreCase("dot_net")) {
+            return DOTNET;
         }
         throw new IllegalArgumentException("Unknown Course: " + value);
     }

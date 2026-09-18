@@ -141,8 +141,9 @@ public class CandidateService {
         // Handle initial document fee if provided
         if (dto.getInitialDocumentFee() != null) {
             InitialDocumentFeeDto feeDto = dto.getInitialDocumentFee();
-            PaymentCreateDto paymentDto = new PaymentCreateDto();
-            paymentDto.setPaymentDate(feeDto.getDate());
+            LocalDate feeDate = feeDto.getDate() != null ? feeDto.getDate()
+                    : (dto.getJoiningDate() != null ? dto.getJoiningDate() : LocalDate.now());
+            paymentDto.setPaymentDate(feeDate);
             paymentDto.setPaymentType(PaymentType.DOCUMENT_FEE);
             paymentDto.setAmount(feeDto.getAmount());
             paymentDto.setPaymentMode(feeDto.getMode());

@@ -54,5 +54,6 @@ public class CandidateCreateDto {
     private Eligibility eligibility;
     private String remarks;
 
+    @jakarta.validation.Valid
     private InitialDocumentFeeDto initialDocumentFee;
 }

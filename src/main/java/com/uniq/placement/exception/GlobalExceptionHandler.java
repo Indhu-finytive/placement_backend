@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.HibernateException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -29,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -142,6 +145,60 @@ public class GlobalExceptionHandler {
                 .title("Type Mismatch")
                 .detail(detail)
                 .traceId(UUID.randomUUID().toString())
+                .build();
+        return new ResponseEntity<>(problem, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ProblemDto> handleDataIntegrityViolationException(DataIntegrityViolationException ex, HttpServletRequest request) {
+        String traceId = UUID.randomUUID().toString();
+        log.error("Data integrity violation. traceId={}", traceId, ex);
+
+        String msg = rootMessage(ex);
+        String detail = "Database constraint violation";
+
+        if (msg != null) {
+            if (msg.contains("violates not-null constraint")) {
+                Matcher m = Pattern.compile("null value in column \"([^\"]+)\"").matcher(msg);
+                if (m.find()) {
+                    detail = String.format("Required field '%s' cannot be null or empty", m.group(1));
+                } else {
+                    detail = "A required field is missing or null";
+                }
+            } else if (msg.contains("violates unique constraint")) {
+                Matcher m = Pattern.compile("Key \\(([^)]+)\\)=\\(([^)]+)\\) already exists").matcher(msg);
+                if (m.find()) {
+                    detail = String.format("A record with %s '%s' already exists", m.group(1), m.group(2));
+                } else {
+                    detail = "A record with this value already exists";
+                }
+                ProblemDto problem = ProblemDto.builder()
+                        .status(HttpStatus.CONFLICT.value())
+                        .title("Conflict")
+                        .detail(detail)
+                        .traceId(traceId)
+                        .build();
+                return new ResponseEntity<>(problem, HttpStatus.CONFLICT);
+            } else if (msg.contains("violates foreign key constraint")) {
+                detail = "Referenced resource does not exist or has dependent records";
+            } else {
+                int detailIdx = msg.indexOf("Detail:");
+                if (detailIdx != -1) {
+                    msg = msg.substring(0, detailIdx).trim();
+                }
+                int errorIdx = msg.indexOf("ERROR:");
+                if (errorIdx != -1) {
+                    msg = msg.substring(errorIdx + 6).trim();
+                }
+                detail = msg;
+            }
+        }
+
+        ProblemDto problem = ProblemDto.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .title("Data Integrity Error")
+                .detail(detail)
+                .traceId(traceId)
                 .build();
         return new ResponseEntity<>(problem, HttpStatus.BAD_REQUEST);
     }
