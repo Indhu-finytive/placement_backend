@@ -24,8 +24,17 @@ public class AccountHolderInputDto {
 
     private String bank;
 
-    @Pattern(regexp = "^\\d{4}$", message = "Last4 must be exactly 4 digits")
+    @com.fasterxml.jackson.annotation.JsonAlias({"branch", "bankBranch"})
+    private String branchName;
+
+    @com.fasterxml.jackson.annotation.JsonAlias({"accountNo", "account"})
+    private String accountNumber;
+
+    @Pattern(regexp = "^$|^\\d{4}$", message = "Last4 must be exactly 4 digits")
     private String last4;
+
+    @com.fasterxml.jackson.annotation.JsonAlias("ifsc")
+    private String ifscCode;
 
     private String upi;
 

@@ -11,4 +11,5 @@ public class CandidatePaymentsDto {
     private BigDecimal totalCollected;
     private BigDecimal totalShareAllocated;
     private BigDecimal candidateOutstanding;
+    private BigDecimal totalDocumentFee;
 }

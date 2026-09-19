@@ -46,6 +46,7 @@ public class CandidateResponseDto {
     private List<PaymentResponseDto> payments;
     private List<String> activity; // Inferred from audit logs
 
+    private BigDecimal documentFee;
     private BigDecimal totalCollected;
     private BigDecimal outstanding;
 }

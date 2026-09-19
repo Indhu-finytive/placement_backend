@@ -376,6 +376,7 @@ public class CandidateService {
 
         // Payments & Totals
         BigDecimal totalCollected = BigDecimal.ZERO;
+        BigDecimal documentFee = BigDecimal.ZERO;
         if (candidate.getPayments() != null) {
             List<PaymentResponseDto> payments = candidate.getPayments().stream()
                     .map(paymentService::mapToDto)
@@ -388,9 +389,13 @@ public class CandidateService {
                 } else {
                     totalCollected = totalCollected.subtract(p.getAmount());
                 }
+                if (p.getPaymentType() == PaymentType.DOCUMENT_FEE) {
+                    documentFee = documentFee.add(p.getAmount());
+                }
             }
         }
         dto.setTotalCollected(totalCollected);
+        dto.setDocumentFee(documentFee);
 
         // Outstanding
         if (candidate.getPlacement() != null && candidate.getPlacement().getCommittedAmount() != null) {

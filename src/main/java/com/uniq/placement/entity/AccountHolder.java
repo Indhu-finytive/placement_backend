@@ -37,8 +37,17 @@ public class AccountHolder {
     @Column(length = 150)
     private String bank;
 
+    @Column(name = "branch_name", length = 100)
+    private String branchName;
+
+    @Column(name = "account_number", length = 50)
+    private String accountNumber;
+
     @Column(length = 4)
     private String last4;
+
+    @Column(name = "ifsc_code", length = 20)
+    private String ifscCode;
 
     @Column(length = 150)
     private String upi;

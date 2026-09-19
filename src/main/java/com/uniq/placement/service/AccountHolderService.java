@@ -82,7 +82,17 @@ public class AccountHolderService {
         }
         
         ah.setBank(dto.getBank());
-        ah.setLast4(dto.getLast4());
+        ah.setBranchName(dto.getBranchName());
+        ah.setAccountNumber(dto.getAccountNumber());
+        if (dto.getLast4() != null && !dto.getLast4().isBlank()) {
+            ah.setLast4(dto.getLast4());
+        } else if (dto.getAccountNumber() != null && dto.getAccountNumber().trim().length() >= 4) {
+            String clean = dto.getAccountNumber().trim();
+            ah.setLast4(clean.substring(clean.length() - 4));
+        } else {
+            ah.setLast4(null);
+        }
+        ah.setIfscCode(dto.getIfscCode());
         ah.setUpi(dto.getUpi());
         ah.setPaymentType(dto.getPaymentType());
         ah.setStatus(dto.getStatus());
@@ -112,7 +122,16 @@ public class AccountHolderService {
         }
         
         if (dto.getBank() != null) ah.setBank(dto.getBank());
+        if (dto.getBranchName() != null) ah.setBranchName(dto.getBranchName());
+        if (dto.getAccountNumber() != null) {
+            ah.setAccountNumber(dto.getAccountNumber());
+            if ((dto.getLast4() == null || dto.getLast4().isBlank()) && dto.getAccountNumber().trim().length() >= 4) {
+                String clean = dto.getAccountNumber().trim();
+                ah.setLast4(clean.substring(clean.length() - 4));
+            }
+        }
         if (dto.getLast4() != null) ah.setLast4(dto.getLast4());
+        if (dto.getIfscCode() != null) ah.setIfscCode(dto.getIfscCode());
         if (dto.getUpi() != null) ah.setUpi(dto.getUpi());
         if (dto.getPaymentType() != null) ah.setPaymentType(dto.getPaymentType());
         if (dto.getStatus() != null) ah.setStatus(dto.getStatus());
@@ -196,7 +215,10 @@ public class AccountHolderService {
             dto.setLinkedTeamId(ah.getLinkedTeam().getId());
         }
         dto.setBank(ah.getBank());
+        dto.setBranchName(ah.getBranchName());
+        dto.setAccountNumber(ah.getAccountNumber());
         dto.setLast4(ah.getLast4());
+        dto.setIfscCode(ah.getIfscCode());
         dto.setUpi(ah.getUpi());
         dto.setPaymentType(ah.getPaymentType());
         dto.setStatus(ah.getStatus());

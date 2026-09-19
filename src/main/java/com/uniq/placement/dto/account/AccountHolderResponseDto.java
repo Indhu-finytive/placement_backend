@@ -15,9 +15,24 @@ public class AccountHolderResponseDto {
     private String linkedTeam;
     private UUID linkedTeamId;
     private String bank;
+    private String branchName;
+    private String accountNumber;
     private String last4;
+    private String ifscCode;
     private String upi;
     private String paymentType;
     private ActiveStatus status;
     private String remarks;
+
+    public String getBranch() {
+        return branchName;
+    }
+
+    public String getIfsc() {
+        return ifscCode;
+    }
+
+    public String getAccountNo() {
+        return accountNumber;
+    }
 }

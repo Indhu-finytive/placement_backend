@@ -41,6 +41,7 @@ public class PaymentService {
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
     private final PaymentIdGenerator paymentIdGenerator;
+    private final CandidateHistoryService candidateHistoryService;
 
     @Transactional(readOnly = true)
     public CandidatePaymentsDto getCandidatePayments(UUID candidateId) {
@@ -51,6 +52,7 @@ public class PaymentService {
         
         BigDecimal totalCollected = BigDecimal.ZERO;
         BigDecimal totalShareAllocated = BigDecimal.ZERO;
+        BigDecimal totalDocumentFee = BigDecimal.ZERO;
         
         List<PaymentResponseDto> items = payments.stream().map(p -> {
             PaymentResponseDto dto = mapToDto(p);
@@ -62,6 +64,9 @@ public class PaymentService {
                 totalCollected = totalCollected.add(p.getAmount());
             } else {
                 totalCollected = totalCollected.subtract(p.getAmount());
+            }
+            if (p.getPaymentType() == PaymentType.DOCUMENT_FEE) {
+                totalDocumentFee = totalDocumentFee.add(p.getAmount());
             }
             
             if (p.getAllocation() != null) {
@@ -79,6 +84,7 @@ public class PaymentService {
         result.setTotalCollected(totalCollected);
         result.setTotalShareAllocated(totalShareAllocated);
         result.setCandidateOutstanding(outstanding);
+        result.setTotalDocumentFee(totalDocumentFee);
         
         return result;
     }
@@ -133,6 +139,17 @@ public class PaymentService {
         }
         
         Payment savedPayment = paymentRepository.save(payment);
+
+        if (candidateHistoryService != null) {
+            String label = dto.getPaymentType() == PaymentType.DOCUMENT_FEE ? "Document fee" : "Collection";
+            candidateHistoryService.log(
+                    candidate.getId(),
+                    currentUser.getUsername(),
+                    dto.getPaymentType() == PaymentType.DOCUMENT_FEE ? "DOCUMENT_FEE_RECORDED" : "PAYMENT_RECORDED",
+                    String.format("%s added · ₹%s", label, dto.getAmount().toPlainString())
+            );
+        }
+
         return mapToDto(savedPayment);
     }
     
